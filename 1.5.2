@@ -121,16 +121,16 @@
         /* == 5. 按鈕美化與動效 */
         /* ================================================= */
         button {
-            padding: 8px 12px; /* 縮小填充 */
-            margin: 10px 0;
+            width: 100%;
+            padding: 15px 20px;
+            margin: 15px 0;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 17px;
             font-weight: 700;
-            border-radius: 6px; /* 稍微縮小圓角 */
+            border-radius: 8px;
             transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 減小陰影 */
-            width: auto; /* 根據內容自適應寬度 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         /* 生成按鈕 (藍色主色) */
@@ -140,20 +140,20 @@
         }
         #generateButton:hover {
             background-color: var(--color-primary-hover);
-            transform: translateY(-1px); /* 減小上浮距離 */
-            box-shadow: 0 3px 6px rgba(0, 123, 255, 0.2);
+            transform: translateY(-2px); /* 輕微上浮動畫 */
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
         }
 
         /* 校驗按鈕 (綠色輔助色) */
         #calculateButton {
             background-color: var(--color-success);
             color: white;
-            margin-top: 10px; /* 減小間距 */
+            margin-top: 15px; /* 與輸入框拉開距離 */
         }
         #calculateButton:hover {
             background-color: #1e7e34;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 6px rgba(40, 167, 69, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
         }
 
         /* ================================================= */
@@ -193,27 +193,30 @@
         .result-value {
             font-weight: 700;
             font-size: 18px;
-            color: var(--color-primary); /* 號碼使用主要顏色 */
+            color: var(--color-primary);
             word-break: break-all;
-            margin-right: 10px; /* 減小間距 */
+            margin-right: 5px; /* 進一步減少間距 */
+            min-width: 0; /* 確保內容不會溢出 */
         }
         
         .result-value.check-code {
             font-size: 22px;
-            color: var(--color-success); /* 校驗碼強調綠色 */
+            color: var(--color-success);
         }
 
         .copy-button {
-            padding: 4px 8px; /* 進一步縮小按鈕 */
+            padding: 5px 8px; /* 進一步縮小寬度 */
             border: 1px solid var(--color-primary);
             background-color: white;
             color: var(--color-primary);
-            border-radius: 4px; /* 更小的圓角 */
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 10px; /* 進一步縮小字體 */
+            font-size: 12px;
             font-weight: 500;
             transition: background-color var(--transition-speed), color var(--transition-speed);
-            white-space: nowrap; /* 防止按鈕文字換行 */
+            white-space: nowrap;
+            min-width: 60px; /* 設置最小寬度，確保按鈕不失形 */
+            max-width: 80px; /* 限制最大寬度 */
         }
 
         .dark-mode .copy-button {
@@ -257,7 +260,6 @@
             transform: scale(1.05);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
         }
-
     </style>
 </head>
 <body class="light-mode">
@@ -283,7 +285,7 @@
 
         <div class="input-group">
             <label for="citySelect">2. 選擇市 (第3~4位):</label>
-           稅            <select id="citySelect" onchange="populateDistricts()">
+            <select id="citySelect" onchange="populateDistricts()">
                 <option value="" disabled selected>請先選擇省份</option>
             </select>
         </div>
@@ -625,7 +627,6 @@
             // 解決第一個問題：初始化省份選項
             populateProvinces(); 
         }
-
     </script>
 </body>
 </html>
