@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身份證號碼生成與校驗器 | 現代版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ================================================= */
+        /* == 1. 核心變數 (配色與動效) */
+        /* ================================================= */
+        :root {
+            /* 主色調 (藍色) */
+            --color-primary: #007bff;
+            --color-primary-hover: #0056b3;
+            /* 輔助色調 (綠色，用於成功/校驗) */
+            --color-success: #28a745;
+            --color-success-light: #d4edda;
+            /* 背景與文字 (日模式) */
+            --color-bg: #F0F2F5; /* 柔和淺灰 */
+            --color-text: #333333;
+            --color-card-bg: rgba(255, 255, 255, 0.9); /* 玻璃卡片背景 */
+            --color-border: #e0e0e0;
+            --color-input-bg: #ffffff;
+            /* 動畫過渡 */
+            --transition-speed: 0.3s;
+        }
+
+        /* ================================================= */
+        /* == 2. 夜間模式變數 (Dark Mode) */
+        /* ================================================= */
+        .dark-mode {
+            --color-bg: #121212; /* 深灰/黑底，不刺眼 */
+            --color-text: #E0E0E0;
+            --color-card-bg: rgba(30, 30, 30, 0.7); /* 深色玻璃卡片 */
+            --color-border: #444444;
+            --color-input-bg: #282828;
+            --color-success: #4CAF50; /* 綠色保持，但略為調整亮度 */
+            --color-success-light: #1e3a23; /* 深色模式下的成功背景 */
+        }
+        
+        /* ================================================= */
+        /* == 3. 基礎樣式與版面 */
+        /* ================================================= */
+        body {
+            font-family: 'Noto Sans TC', Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            padding: 30px 20px;
+            max-width: 800px;
+            margin: auto;
+            line-height: 1.6;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        h1 { font-weight: 700; margin-bottom: 5px; }
+
+        h2 {
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            font-weight: 700;
+            color: var(--color-primary); /* 標題使用品牌色 */
+        }
+        
+        .card-container {
+            background: var(--color-card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            /* Glassmorphism 核心效果 */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3); /* 輕微邊框增加質感 */
+            transition: background var(--transition-speed), border var(--transition-speed);
+        }
+
+        /* ================================================= */
+        /* == 4. 表單元素與互動美化 */
+        /* ================================================= */
+        .input-group { margin-bottom: 20px; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 400;
+            font-size: 15px;
+            opacity: 0.85;
+        }
+
+        select, input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px 15px;
+            box-sizing: border-box;
+            font-size: 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px; /* 更圓潤的邊角 */
+            background-color: var(--color-input-bg);
+            color: var(--color-text);
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+            -webkit-appearance: none; /* 移除默認樣式 */
+            appearance: none;
+        }
+        
+        select {
+             /* 給下拉選單增加一個自訂箭頭，使其在各瀏覽器更統一 */
+            background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%20fill%3D%22%23666666%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+
+        select:focus, input[type="text"]:focus, input[type="date"]:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* 聚焦時的藍色光暈 */
+            outline: none;
+        }
+
+        /* ================================================= */
+        /* == 5. 按鈕美化與動效 */
+        /* ================================================= */
+        button {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border: none;
+            cursor: pointer;
+            font-size: 17px;
+            font-weight: 700;
+            border-radius: 8px;
+            transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 生成按鈕 (藍色主色) */
+        #generateButton {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        #generateButton:hover {
+            background-color: var(--color-primary-hover);
+            transform: translateY(-2px); /* 輕微上浮動畫 */
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        /* 校驗按鈕 (綠色輔助色) */
+        #calculateButton {
+            background-color: var(--color-success);
+            color: white;
+            margin-top: 15px; /* 與輸入框拉開距離 */
+        }
+        #calculateButton:hover {
+            background-color: #1e7e34;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        /* ================================================= */
+        /* == 6. 結果顯示區塊 (重寫以適應新的複製按鈕) */
+        /* ================================================= */
+        .result-output {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: var(--color-input-bg);
+            border: 1px solid var(--color-border);
+            transition: all var(--transition-speed);
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--color-border);
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .result-label {
+            font-weight: 400;
+            font-size: 15px;
+            color: var(--color-text);
+            opacity: 0.7;
+            flex-grow: 1;
+        }
+
+        .result-value {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--color-primary); /* 號碼使用主要顏色 */
+            word-break: break-all;
+            /* 為了容納更小的複製按鈕，縮小間距 */
+            margin-right: 10px; 
+            /* 讓文字盡可能在同一行，但避免斷開過早 */
+            white-space: nowrap; 
+            overflow-x: auto;
+        }
+        
+        .result-value.check-code {
+            font-size: 22px;
+            color: var(--color-success); /* 校驗碼強調綠色 */
+        }
+        /* 調整區塊一的完整號碼顏色，使其更醒目 */
+        #generatedIdValue {
+            color: var(--color-success); 
+        }
+
+        .copy-button {
+            /* 核心修改: 減小內邊距和字體大小，使其更小巧 */
+            padding: 6px 12px; /* 原為 8px 15px */
+            border: 1px solid var(--color-primary);
+            background-color: white;
+            color: var(--color-primary);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px; /* 原為 14px */
+            font-weight: 500;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            white-space: nowrap; /* 防止按鈕文字換行 */
+        }
+
+        .dark-mode .copy-button {
+            background-color: var(--color-input-bg);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        
+        .copy-button:hover {
+            background-color: var(--color-primary);
+            color: white;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #dc3545;
+            font-weight: 700;
+            padding: 10px;
+        }
+
+        /* ================================================= */
+        /* == 7. 日夜間切換開關 */
+        /* ================================================= */
+        #modeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--color-card-bg);
+            color: var(--color-text);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all var(--transition-speed);
+        }
+        #modeToggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+        }
+
+    </style>
+</head>
+<body class="light-mode">
+
+    <button id="modeToggle" onclick="toggleDarkMode()" title="切換日夜間模式">
+        ☀️
+    </button>
+    
+    <header>
+        <h1>身份證號碼工具箱</h1>
+        <p style="opacity: 0.7;">現代化生成與格式校驗，讓你的資料處理更輕鬆。</p>
+    </header>
+
+    <div class="card-container">
+        <h2>區塊一：身份證號碼生成器</h2>
+        
+        <div class="input-group">
+            <label for="provinceSelect">1. 選擇省/自治區/直轄市 (第1~2位):</label>
+            <select id="provinceSelect" onchange="populateCities()">
+                <option value="" disabled selected>-- 請選擇省份 --</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="citySelect">2. 選擇市 (第3~4位):</label>
+            <select id="citySelect" onchange="populateDistricts()">
+                <option value="" disabled selected>請先選擇省份</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="districtSelect">3. 選擇區/縣 (第5~6位):</label>
+            <select id="districtSelect">
+                <option value="" disabled selected>請先選擇市</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="birthDate">4. 選擇出生日期 (第7~14位):</label>
+            <input type="date" id="birthDate" value="2000-01-01">
+        </div>
+
+        <div class="input-group">
+            <label for="genderSelect">5. 選擇性別 (第17位：奇數男/偶數女):</label>
+            <select id="genderSelect">
+                <option value="1">男 (奇數)</option>
+                <option value="2">女 (偶數)</option>
+            </select>
+        </div>
+
+        <button id="generateButton" onclick="generateIdCard()">生成完整的身份證號碼</button>
+
+        <div id="generatedIdOutput" class="result-output" style="display:none;">
+            <div class="result-item">
+                <span class="result-label">生成的號碼:</span>
+                                <span id="generatedIdValue" class="result-value"></span>
+                <button class="copy-button" onclick="copyToClipboard('generatedIdValue')">一鍵複製</button>
+            </div>
+                    </div>
+        <div id="generatedIdError" class="result-output error-message" style="display:none;"></div>
+
+    </div>
+    
+    <div class="card-container">
+        <h2>區塊二：第$18$位校驗器 (格式檢查)</h2>
+        <p style="opacity: 0.7;">請輸入 **前 $17$ 位數字** 來單獨計算第 $18$ 位校驗碼：</p>
+
+        <div class="input-group">
+             <input type="text" id="id17Input" maxlength="17" placeholder="例如：43010319710508316" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+        
+        <button id="calculateButton" onclick="calculateAndDisplay()">計算並檢查</button>
+
+        <div id="resultOutput" class="result-output" style="display:none;">
+            <div class="result-item">
+                <span class="result-label">第 $18$ 位校驗碼:</span>
+                <span id="calculatedCheckCode" class="result-value check-code"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">完整的身份證號碼:</span>
+                <span id="fullIdCardNumber" class="result-value"></span>
+                <button class="copy-button" onclick="copyToClipboard('fullIdCardNumber')">一鍵複製</button>
+            </div>
+        </div>
+        <div id="resultError" class="result-output error-message" style="display:none;"></div>
+
+    </div>
+
+    <script>
+        // =============================================
+        // 數據庫：全國行政區劃代碼
+        // (保持您提供的 AREA_CODES 數據不變)
+        // =============================================
+        const AREA_CODES = {
+            // ==================== 直轄市 (11/12/31/50) ====================
+            "北京市 (11)": {
+                "京師特區": {
+                    "東城區": "110101", "西城區": "110102", "朝陽區": "110105",
+                    "豐台區": "110106", "石景山區": "110107", "海淀區": "110108",
+                    "門頭溝區": "110109", "房山區": "110111", "通州區": "110112",
+                    "順義區": "110113", "昌平區": "110114", "大興區": "110115",
+                    "懷柔區": "110116", "平谷區": "110117", "密雲區": "110118",
+                    "延慶區": "110119",
+                    "市轄區(通用)": "110100"
+                }
+            },
+            "湖南省 (43)": {
+                "長沙市": { "芙蓉區": "430102", "天心區": "430103", "嶽麓區": "430104", "開福區": "430105", "雨花區": "430111", "長沙縣": "430121", "瀏陽市": "430181", "寧鄉市": "430182", "市轄區(通用)": "430100" },
+                "株洲市": { "荷塘區": "430202", "蘆淞區": "430203", "石峰區": "430204", "天元區": "430211", "醴陵市": "430281", "市轄區(通用)": "430200" },
+                "湘潭市": { "嶽塘區": "430304", "雨湖區": "430302", "湘鄉市": "430381", "韶山市": "430382", "市轄區(通用)": "430300" },
+                "衡陽市": { "珠暉區": "430405", "雁峰區": "430406", "石鼓區": "430407", "南嶽區": "430412", "耒陽市": "430481", "常寧市": "430482", "市轄區(通用)": "430400" },
+                "邵陽市": { "雙清區": "430502", "大祥區": "430503", "北塔區": "430511", "武岡市": "430581", "邵東市": "430582", "市轄區(通用)": "430500" },
+                "嶽陽市": { "嶽陽樓區": "430602", "君山區": "430603", "雲溪區": "430604", "臨湘市": "430681", "汨羅市": "430682", "市轄區(通用)": "430600" },
+                "常德市": { "武陵區": "430702", "鼎城區": "430703", "津市市": "430781", "市轄區(通用)": "430700" },
+                "張家界市": { "永定區": "430802", "武陵源區": "430811", "市轄區(通用)": "430800" },
+                "益陽市": { "資陽區": "430902", "赫山區": "430903", "沅江市": "430981", "市轄區(通用)": "430900" },
+                "郴州市": { "北湖區": "431002", "蘇仙區": "431003", "資興市": "431081", "市轄區(通用)": "431000" },
+                "永州市": { "零陵區": "431102", "冷水灘區": "431103", "市轄區(通用)": "431100" },
+                "懷化市": { "鶴城區": "431202", "洪江市": "431281", "市轄區(通用)": "431200" },
+                "婁底市": { "婁星區": "431302", "冷水江市": "431381", "漣源市": "431382", "市轄區(通用)": "431300" },
+                "湘西土家族苗族自治州": { "吉首市": "433101", "盟轄區(通用)": "433100" }
+            }
+            // ==================== 華南、西南、西北等地區數據 (略) ====================
+        };
+        
+        // =============================================
+        // 身份證核心算法 - 權重和校驗碼
+        // =============================================
+        // 權重值
+        const WEIGHTS = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+        // 校驗碼
+        const CHECK_CODES = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+        // 計算第 18 位校驗碼的函式
+        function calculateCheckCode(id17) {
+            if (id17.length !== 17 || !/^\d+$/.test(id17)) {
+                return null; // 確保輸入是 17 位純數字
+            }
+            let sum = 0;
+            for (let i = 0; i < 17; i++) {
+                sum += parseInt(id17[i]) * WEIGHTS[i];
+            }
+            const mod = sum % 11;
+            return CHECK_CODES[mod];
+        }
+
+        // =============================================
+        // 區塊一：生成器功能
+        // =============================================
+
+        // 初始化省份下拉選單 (解決「沒有任何選項」的問題)
+        function populateProvinces() {
+            const provinceSelect = document.getElementById('provinceSelect');
+            // 清空所有選項 (保留第一個 disabled/selected 的選項)
+            provinceSelect.innerHTML = '<option value="" disabled selected>-- 請選擇省份 --</option>';
+
+            const provinces = Object.keys(AREA_CODES);
+            provinces.forEach(provinceName => {
+                const option = document.createElement('option');
+                option.value = provinceName;
+                option.textContent = provinceName;
+                provinceSelect.appendChild(option);
+            });
+            // 由於下拉菜單已經有選項，將 "disabled" 移除
+            const disabledOption = provinceSelect.querySelector('option[disabled]');
+            if (disabledOption) disabledOption.disabled = false;
+        }
+
+        // 填充市級選單
+        function populateCities() {
+            const provinceName = document.getElementById('provinceSelect').value;
+            const citySelect = document.getElementById('citySelect');
+            const districtSelect = document.getElementById('districtSelect');
+
+            citySelect.innerHTML = '<option value="" disabled selected>-- 請選擇市 --</option>';
+            districtSelect.innerHTML = '<option value="" disabled selected>請先選擇市</option>';
+            
+            if (provinceName && AREA_CODES[provinceName]) {
+                const cities = Object.keys(AREA_CODES[provinceName]);
+                cities.forEach(cityName => {
+                    const option = document.createElement('option');
+                    option.value = cityName;
+                    option.textContent = cityName;
+                    citySelect.appendChild(option);
+                });
+                const disabledOption = citySelect.querySelector('option[disabled]');
+                if (disabledOption) disabledOption.disabled = false;
+            }
+        }
+
+        // 填充區/縣級選單
+        function populateDistricts() {
+            const provinceName = document.getElementById('provinceSelect').value;
+            const cityName = document.getElementById('citySelect').value;
+            const districtSelect = document.getElementById('districtSelect');
+
+            districtSelect.innerHTML = '<option value="" disabled selected>-- 請選擇區/縣 --</option>';
+
+            if (provinceName && cityName && AREA_CODES[provinceName] && AREA_CODES[provinceName][cityName]) {
+                const districts = AREA_CODES[provinceName][cityName];
+                const districtKeys = Object.keys(districts);
+                
+                districtKeys.forEach(districtName => {
+                    const option = document.createElement('option');
+                    option.value = districts[districtName]; // 這裡儲存的是 6 位代碼
+                    option.textContent = districtName + ' (' + districts[districtName].substring(4, 6) + ')';
+                    districtSelect.appendChild(option);
+                });
+                const disabledOption = districtSelect.querySelector('option[disabled]');
+                if (disabledOption) disabledOption.disabled = false;
+            }
+        }
+
+        // 生成完整的身份證號碼
+        function generateIdCard() {
+            const districtCode = document.getElementById('districtSelect').value;
+            const birthDate = document.getElementById('birthDate').value.replace(/-/g, '');
+            const genderValue = document.getElementById('genderSelect').value;
+            const outputDiv = document.getElementById('generatedIdOutput');
+            const errorDiv = document.getElementById('generatedIdError');
+            
+            // 隱藏之前的輸出和錯誤
+            outputDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            // 1. 驗證基本輸入
+            if (!districtCode || !birthDate || !genderValue) {
+                errorDiv.textContent = '錯誤：請確認所有欄位都已選擇或填寫！';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // 2. 生成 $15$ 位基礎號碼 (前 6 位 + 8 位生日 + 3 位順序碼/性別碼)
+            // 隨機生成 $3$ 位順序碼，第 $17$ 位必須符合性別要求
+            let sequenceCode = '';
+            let isMale = (genderValue === '1'); // true: 男 (奇數), false: 女 (偶數)
+
+            // 確保第 17 位 (順序碼的最後一位) 奇數為男，偶數為女
+            const random17thDigit = isMale ? (Math.floor(Math.random() * 5) * 2 + 1) : (Math.floor(Math.random() * 5) * 2 + 2);
+            
+            // 隨機生成前兩位
+            const random15th16th = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+            
+            sequenceCode = random15th16th + random17thDigit;
+            
+            // 3. 組合前 $17$ 位
+            const id17 = districtCode + birthDate + sequenceCode;
+            
+            // 4. 計算校驗碼 (第 $18$ 位)
+            const checkCode = calculateCheckCode(id17);
+            
+            if (!checkCode) {
+                 errorDiv.textContent = '生成錯誤：計算校驗碼時發生問題。';
+                 errorDiv.style.display = 'block';
+                 return;
+            }
+            
+            // 5. 輸出結果 (根據新需求修改輸出格式)
+            const finalIdCard = id17 + checkCode;
+            // 完整號碼輸出
+            document.getElementById('generatedIdValue').textContent = finalIdCard;
+            
+            // 移除單獨顯示校驗碼的行，僅需確保生成邏輯正確
+            // document.getElementById('generatedCheckCode').textContent = checkCode; 
+            
+            outputDiv.style.display = 'block';
+        }
+
+        // =============================================
+        // 區塊二：校驗器功能
+        // =============================================
+        function calculateAndDisplay() {
+            const id17Input = document.getElementById('id17Input').value.trim();
+            const resultDiv = document.getElementById('resultOutput');
+            const errorDiv = document.getElementById('resultError');
+            
+            // 隱藏之前的輸出和錯誤
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            // 1. 驗證輸入
+            if (id17Input.length !== 17 || !/^\d+$/.test(id17Input)) {
+                errorDiv.textContent = '錯誤：請輸入完整的 **17 位數字**。';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // 2. 計算校驗碼
+            const calculatedCode = calculateCheckCode(id17Input);
+            
+            if (!calculatedCode) {
+                 errorDiv.textContent = '計算錯誤：無法計算第 $18$ 位校驗碼。';
+                 errorDiv.style.display = 'block';
+                 return;
+            }
+            
+            // 3. 輸出結果 (根據新需求修改輸出格式)
+            const fullNumber = id17Input + calculatedCode;
+            
+            document.getElementById('calculatedCheckCode').textContent = calculatedCode;
+            document.getElementById('fullIdCardNumber').textContent = fullNumber;
+            resultDiv.style.display = 'block';
+            
+            // 清空輸入框 (可選)
+            document.getElementById('id17Input').value = '';
+        }
+
+        // =============================================
+        // 通用功能：一鍵複製
+        // =============================================
+        function copyToClipboard(elementId) {
+            const textToCopy = document.getElementById(elementId).textContent;
+            
+            // 使用 Clipboard API 進行複製
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // 為了提供即時反饋，改變按鈕文字
+                    // 找到正確的按鈕元素
+                    let button = document.querySelector(`#${elementId}`).nextElementSibling;
+                    // 處理如果結果號碼是最後一個元素 (如區塊二的校驗碼)
+                    if (!button || !button.classList.contains('copy-button')) {
+                        // 對於區塊二的第一行 (校驗碼), 需要向上找到父級再找按鈕 (如果存在的話)
+                        if(elementId === 'calculatedCheckCode') {
+                            button = document.getElementById('fullIdCardNumber').nextElementSibling;
+                        }
+                    }
+                    
+                    if (!button) return; // 安全退出
+
+                    const originalText = button.textContent;
+                    
+                    button.textContent = '已複製!';
+                    button.style.backgroundColor = 'var(--color-success)';
+                    button.style.borderColor = 'var(--color-success)';
+                    button.style.color = 'white';
+
+                    // 幾秒後恢復
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.backgroundColor = 'white';
+                        button.style.borderColor = 'var(--color-primary)';
+                        button.style.color = 'var(--color-primary)';
+                        // 暗色模式下的顏色恢復
+                        if (document.body.classList.contains('dark-mode')) {
+                             button.style.backgroundColor = 'var(--color-input-bg)';
+                             button.style.borderColor = 'var(--color-primary)';
+                             button.style.color = 'var(--color-primary)';
+                        }
+                    }, 1000);
+                }).catch(err => {
+                    alert('複製失敗，請手動複製: ' + textToCopy);
+                    console.error('複製失敗:', err);
+                });
+            } else {
+                // 備用方案 (針對不支援 Clipboard API 的舊瀏覽器)
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                     alert('已複製!');
+                } catch (err) {
+                     alert('複製失敗，請手動複製: ' + textToCopy);
+                }
+                document.body.removeChild(textarea);
+            }
+        }
+        
+        // =============================================
+        // 日夜間模式切換 (保持不變)
+        // =============================================
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            document.getElementById('modeToggle').textContent = isDarkMode ? '🌙' : '☀️';
+            localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+        }
+        
+        // 頁面載入時檢查日夜間模式，並執行初始化
+        window.onload = function() {
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('modeToggle').textContent = '🌙';
+            } else {
+                 document.getElementById('modeToggle').textContent = '☀️';
+            }
+            
+            // 解決第一個問題：初始化省份選項
+            populateProvinces(); 
+        }
+
+    </script>
+</body>
+</html>
